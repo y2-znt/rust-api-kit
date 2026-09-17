@@ -7,15 +7,17 @@ mod db;
 mod health;
 mod users;
 
+use anyhow::{Context, Result};
 use config::Config;
 use db::create_pool;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     dotenvy::dotenv().ok();
 
-    let config = Config::from_env();
-    let pool = create_pool(&config.database_url);
+    let config: Config = Config::from_env().context("loading application configuration")?;
+    let pool: sqlx::Pool<sqlx::Postgres> =
+        create_pool(&config.database_url).context("creating PostgreSQL pool")?;
 
     let app = app::create_app(pool);
 
@@ -23,11 +25,13 @@ async fn main() {
 
     let listener = tokio::net::TcpListener::bind(&address)
         .await
-        .expect("Failed to bind TCP listener");
+        .with_context(|| format!("binding TCP listener to {address}"))?;
 
     banner::print(&config.host, config.port);
 
     axum::serve(listener, app)
         .await
-        .expect("Failed to start server");
+        .context("serving HTTP requests")?;
+
+    Ok(())
 }
