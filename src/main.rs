@@ -16,8 +16,9 @@ async fn main() -> Result<()> {
     dotenvy::dotenv().ok();
 
     let config: Config = Config::from_env().context("loading application configuration")?;
-    let pool: sqlx::Pool<sqlx::Postgres> =
-        create_pool(&config.database_url).context("creating PostgreSQL pool")?;
+    let pool: sqlx::Pool<sqlx::Postgres> = create_pool(&config.database_url)
+        .await
+        .context("connecting to PostgreSQL")?;
 
     let app = app::create_app(pool);
 

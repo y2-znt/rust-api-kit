@@ -38,13 +38,13 @@ impl Config {
     ) -> Result<Self, ConfigError> {
         let host: String = optional_variable(host, "APP_HOST", "0.0.0.0")?;
         let port_value: String = optional_variable(port, "APP_PORT", "4000")?;
-        let port: u16 = port_value.parse::<u16>().map_err(|source: ParseIntError| {
-            ConfigError::InvalidPort {
+        let port: u16 = port_value
+            .parse::<u16>()
+            .map_err(|source| ConfigError::InvalidPort {
                 value: port_value,
                 source,
-            }
-        })?;
-        let database_url = required_variable(database_url, "DATABASE_URL")?;
+            })?;
+        let database_url: String = required_variable(database_url, "DATABASE_URL")?;
 
         Ok(Self {
             host,
@@ -85,7 +85,7 @@ mod tests {
 
     #[test]
     fn rejects_an_invalid_port() {
-        let result = Config::from_env_values(
+        let result: Result<Config, ConfigError> = Config::from_env_values(
             Ok("127.0.0.1".to_string()),
             Ok("not-a-port".to_string()),
             Ok("postgres://localhost/users".to_string()),
