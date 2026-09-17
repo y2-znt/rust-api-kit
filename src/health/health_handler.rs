@@ -72,7 +72,7 @@ mod tests {
 
     #[tokio::test]
     async fn reports_a_database_timeout() {
-        let result = check_database(
+        let result: Result<(), DatabaseHealthError> = check_database(
             future::pending::<Result<i32, sqlx::Error>>(),
             Duration::from_millis(1),
         )
@@ -83,7 +83,7 @@ mod tests {
 
     #[tokio::test]
     async fn preserves_a_database_query_error() {
-        let result = check_database(
+        let result: Result<(), DatabaseHealthError> = check_database(
             future::ready(Err(sqlx::Error::PoolTimedOut)),
             Duration::from_secs(1),
         )
@@ -97,7 +97,8 @@ mod tests {
 
     #[tokio::test]
     async fn accepts_a_successful_database_check() {
-        let result = check_database(future::ready(Ok(1)), Duration::from_secs(1)).await;
+        let result: Result<(), DatabaseHealthError> =
+            check_database(future::ready(Ok(1)), Duration::from_secs(1)).await;
 
         assert!(result.is_ok());
     }
